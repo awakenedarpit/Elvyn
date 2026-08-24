@@ -72,3 +72,20 @@ create policy "notes_select_own" on public.notes for select to authenticated usi
 create policy "notes_insert_own" on public.notes for insert to authenticated with check (user_id = auth.uid());
 create policy "notes_update_own" on public.notes for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "notes_delete_own" on public.notes for delete to authenticated using (user_id = auth.uid());
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id)
+  values (new.id)
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
