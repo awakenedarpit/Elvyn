@@ -2,11 +2,11 @@
 
 A calm, modern workspace for productivity, planning, learning, and focused work.
 
-## Project Status
+## Status
 
-**Phase 1 — Application Foundation**
+**Active development** — core authentication, dashboard, goals, tasks, notes, profile, shared UI primitives, loading/error states, and CI validation are in place.
 
-Elvyn is being built from scratch in small, verified phases. AI-powered functionality is intentionally deferred and will be introduced later as a **Coming Soon** capability.
+AI-powered functionality is intentionally deferred and will be introduced later as a **Coming Soon** capability.
 
 ## Stack
 
@@ -14,8 +14,8 @@ Elvyn is being built from scratch in small, verified phases. AI-powered function
 - React 19
 - TypeScript
 - Tailwind CSS 4
-- Supabase / PostgreSQL — planned
-- shadcn/ui — planned
+- Supabase / PostgreSQL
+- GitHub Actions
 
 ## Repository Structure
 
@@ -23,6 +23,7 @@ Elvyn is being built from scratch in small, verified phases. AI-powered function
 .
 ├── src/                 # Application source
 ├── docs/                # Product, architecture, design, development and testing docs
+├── .github/workflows/   # CI automation
 ├── AGENTS.md            # AI coding-agent quick-start instructions
 ├── package.json
 ├── tsconfig.json
@@ -61,9 +62,19 @@ Then open the local development URL shown by Next.js.
 
 ## Environment
 
-Copy `.env.example` to `.env.local` and provide the required public Supabase values once the Elvyn Supabase project is connected.
+Copy `.env.example` to `.env.local` and provide the required public Supabase values.
 
 Never commit `.env.local` or secret credentials.
+
+## CI
+
+Every push and pull request is validated with GitHub Actions using:
+
+```text
+npm ci → lint → typecheck → build
+```
+
+The workflow also supports manual execution from the GitHub Actions tab.
 
 ## Development Principle
 
