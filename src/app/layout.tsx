@@ -30,7 +30,7 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        {children}
+        <div id="main-content">{children}</div>
       </body>
     </html>
   );
