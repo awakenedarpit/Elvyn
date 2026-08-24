@@ -8,6 +8,5 @@
       "onAutoForward": "openBrowser"
     }
   },
-  "postCreateCommand": "npm ci",
-  "postStartCommand": "npm run dev"
+  "postCreateCommand": "npm ci"
 }
