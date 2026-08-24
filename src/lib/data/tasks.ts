@@ -16,14 +16,7 @@ export type Task = {
 
 export async function getCurrentUserTasks(): Promise<Task[]> {
   const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('tasks')
-    .select('id, user_id, goal_id, title, description, status, priority, due_at, completed_at, created_at, updated_at')
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    throw new Error(`Unable to load tasks: ${error.message}`)
-  }
-
+  const { data, error } = await supabase.from('tasks').select('id, user_id, goal_id, title, description, status, priority, due_at, completed_at, created_at, updated_at').order('created_at', { ascending: false })
+  if (error) throw new Error(`Unable to load tasks: ${error.message}`)
   return (data ?? []) as Task[]
 }
