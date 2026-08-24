@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation'
 
+import { getCurrentUserGoals } from '@/lib/data/goals'
 import { getCurrentProfile } from '@/lib/data/profile'
+import { getCurrentUserTasks } from '@/lib/data/tasks'
+import { getCurrentUserNotes } from '@/lib/data/notes'
 import { createClient } from '@/lib/supabase/server'
 import { LogoutButton } from './LogoutButton'
 import { ProfileSummary } from './ProfileSummary'
@@ -13,11 +16,19 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  const profile = await getCurrentProfile()
+  const [profile, goals, tasks, notes] = await Promise.all([
+    getCurrentProfile(),
+    getCurrentUserGoals(),
+    getCurrentUserTasks(),
+    getCurrentUserNotes(),
+  ])
 
   if (!profile) {
     redirect('/login')
   }
+
+  const activeGoals = goals.filter((goal) => goal.status === 'active').length
+  const openTasks = tasks.filter((task) => task.status === 'todo' || task.status === 'in_progress').length
 
   return (
     <main className="min-h-screen px-6 py-16">
@@ -40,10 +51,21 @@ export default async function DashboardPage() {
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-black/45 dark:text-white/45">
               Workspace
             </p>
-            <h2 className="mt-2 text-xl font-semibold">Ready for your data</h2>
-            <p className="mt-2 text-sm text-black/60 dark:text-white/60">
-              Goals, tasks, and notes will be connected here in the next implementation phase.
-            </p>
+            <h2 className="mt-2 text-xl font-semibold">Your current data</h2>
+            <div className="mt-5 grid grid-cols-3 gap-3">
+              <div className="rounded-xl bg-black/5 p-4 dark:bg-white/5">
+                <p className="text-2xl font-semibold">{activeGoals}</p>
+                <p className="mt-1 text-xs text-black/55 dark:text-white/55">Active goals</p>
+              </div>
+              <div className="rounded-xl bg-black/5 p-4 dark:bg-white/5">
+                <p className="text-2xl font-semibold">{openTasks}</p>
+                <p className="mt-1 text-xs text-black/55 dark:text-white/55">Open tasks</p>
+              </div>
+              <div className="rounded-xl bg-black/5 p-4 dark:bg-white/5">
+                <p className="text-2xl font-semibold">{notes.length}</p>
+                <p className="mt-1 text-xs text-black/55 dark:text-white/55">Notes</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
