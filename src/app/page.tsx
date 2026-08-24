@@ -7,8 +7,12 @@ export default function Home() {
     <main id="main-content" className="min-h-screen px-5 py-10 sm:px-6 sm:py-16">
       <section className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl flex-col justify-center">
         <div className="max-w-3xl elvyn-enter">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#635bff] dark:text-[#8b84ff]">Elvyn</p>
-          <h1 className="mt-5 text-4xl font-semibold tracking-tight sm:text-6xl">A calmer way to organize focused work.</h1>
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#635bff]/15 bg-white/70 px-3 py-1.5 text-xs font-medium text-black/60 shadow-sm backdrop-blur dark:border-[#8b84ff]/20 dark:bg-white/[0.05] dark:text-white/65">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#635bff] shadow-[0_0_12px_rgba(99,91,255,.65)] dark:bg-[#8b84ff]" aria-hidden="true" />
+            A quieter workspace for focused days
+          </div>
+          <p className="mt-7 text-sm font-semibold uppercase tracking-[0.2em] text-[#635bff] dark:text-[#8b84ff]">Elvyn</p>
+          <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-[-0.035em] text-balance sm:text-6xl">A calmer way to organize focused work.</h1>
           <p className="mt-6 max-w-2xl text-base leading-7 text-black/60 dark:text-white/60 sm:text-lg">Bring goals, tasks, notes, and your personal workspace together without unnecessary noise.</p>
           <nav aria-label="Account actions" className="mt-8 flex flex-wrap gap-3 elvyn-enter elvyn-enter-delay-1">
             <Link href="/login" className={`${linkClass} bg-[#635bff] text-white shadow-lg shadow-[#635bff]/20 hover:bg-[#554df0] dark:bg-[#8b84ff] dark:text-[#0b0d16]`}>Sign in</Link>
