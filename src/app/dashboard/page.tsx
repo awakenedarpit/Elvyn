@@ -25,7 +25,7 @@ export default async function DashboardPage() {
   const openTasks = tasks.filter((task) => task.status === 'todo' || task.status === 'in_progress').length
 
   return (
-    <main id="main-content" className="min-h-screen px-5 py-8 sm:px-6 sm:py-12">
+    <main className="min-h-screen px-5 py-8 sm:px-6 sm:py-12">
       <section className="mx-auto max-w-6xl">
         <header className="flex flex-col gap-6 border-b border-black/10 pb-6 dark:border-white/10 sm:flex-row sm:items-start sm:justify-between">
           <div><p className="text-sm font-medium text-black/50 dark:text-white/50">Elvyn</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Your workspace</h1><p className="mt-2 text-sm text-black/60 dark:text-white/60">A calm place for focused work.</p></div>
