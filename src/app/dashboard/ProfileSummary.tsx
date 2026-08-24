@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import type { Profile } from '@/lib/data/profile'
 
 type ProfileSummaryProps = {
@@ -15,6 +17,12 @@ export function ProfileSummary({ profile, email }: ProfileSummaryProps) {
       </p>
       <h2 className="mt-2 text-xl font-semibold">{name}</h2>
       <p className="mt-1 text-sm text-black/60 dark:text-white/60">{email}</p>
+      <Link
+        className="mt-5 inline-block text-sm font-medium underline-offset-4 hover:underline"
+        href="/dashboard/profile"
+      >
+        Edit profile →
+      </Link>
     </div>
   )
 }
