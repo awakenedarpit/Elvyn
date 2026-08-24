@@ -14,8 +14,6 @@ This document defines the initial PostgreSQL data architecture for Elvyn. It est
 
 The schema is intentionally designed for the single-user MVP while leaving a clean path toward future collaboration.
 
----
-
 ## 2. Database Principles
 
 1. PostgreSQL is the source of truth for persistent application data.
@@ -25,11 +23,9 @@ The schema is intentionally designed for the single-user MVP while leaving a cle
 5. Foreign keys must enforce valid relationships.
 6. Timestamps should use timezone-aware values.
 7. Database changes must use migrations.
-8. The frontend must never be treated as an authorization boundary.
+8. The frontend is never an authorization boundary.
 9. Avoid duplicate sources of truth.
 10. Do not create tables for future features until they are actually required.
-
----
 
 ## 3. Identity Model
 
@@ -38,7 +34,7 @@ Supabase Auth
      │
      │ auth.users.id
      ▼
-profiles.id / profiles.user_id
+profiles.user_id
      │
      ├── tasks
      ├── projects
@@ -51,9 +47,7 @@ profiles.id / profiles.user_id
      └── preferences
 ```
 
-The authenticated Supabase user remains the identity authority. The application profile stores application-specific user information.
-
----
+Supabase Auth remains the identity authority. The application profile stores application-specific user information.
 
 ## 4. Core Tables
 
@@ -74,15 +68,11 @@ activity_events
 file_attachments
 ```
 
-Additional join tables may be introduced where a many-to-many relationship genuinely requires one.
+Additional join tables may be introduced only when a real many-to-many relationship requires one.
 
----
-
-# 5. `profiles`
+## 5. `profiles`
 
 Stores application-specific profile information for an authenticated user.
-
-### Planned fields
 
 ```text
 id                uuid PK
@@ -94,20 +84,16 @@ created_at        timestamptz
 updated_at        timestamptz
 ```
 
-### Rules
+Rules:
 
 - One profile per authenticated user.
-- `user_id` must be unique.
+- `user_id` is unique.
 - Profile creation should be handled automatically where practical.
-- Profile deletion behavior must account for dependent records.
+- Profile deletion must account for dependent records.
 
----
-
-# 6. `user_preferences`
+## 6. `user_preferences`
 
 Stores user-specific application preferences.
-
-### Planned fields
 
 ```text
 id                uuid PK
@@ -119,15 +105,11 @@ created_at        timestamptz
 updated_at        timestamptz
 ```
 
-Additional preferences may be added only when required by an actual feature.
+Additional preferences are added only when required by an actual feature.
 
----
-
-# 7. `tasks`
+## 7. `tasks`
 
 Represents actionable work.
-
-### Planned fields
 
 ```text
 id                uuid PK
@@ -135,9 +117,9 @@ user_id           uuid → profiles.user_id
 project_id        uuid nullable → projects.id
 goal_id            uuid nullable → goals.id
 title             text
- description      text nullable
+description       text nullable
 status            text
-a priority        text
+priority          text
 due_at            timestamptz nullable
 completed_at      timestamptz nullable
 archived_at       timestamptz nullable
@@ -145,20 +127,7 @@ created_at        timestamptz
 updated_at        timestamptz
 ```
 
-### Important correction before migration
-
-The actual SQL implementation must use valid identifiers. The conceptual fields above mean:
-
-```text
-description
-priority
-```
-
-not `a priority`.
-
-### Status
-
-Initial controlled values:
+Initial status values:
 
 ```text
 TODO
@@ -167,9 +136,7 @@ COMPLETED
 ARCHIVED
 ```
 
-### Priority
-
-Initial controlled values:
+Initial priority values:
 
 ```text
 LOW
@@ -178,21 +145,17 @@ HIGH
 URGENT
 ```
 
-### Rules
+Rules:
 
 - A task must belong to a user.
-- Project and goal relationships must not bypass ownership boundaries.
+- Project and goal relationships must preserve ownership.
 - Completing a task sets `completed_at`.
 - Reopening a task clears or appropriately updates completion state.
-- Archived tasks should not be treated as active work.
+- Archived tasks are not treated as active work.
 
----
-
-# 8. `projects`
+## 8. `projects`
 
 Represents a larger body of work.
-
-### Planned fields
 
 ```text
 id                uuid PK
@@ -207,9 +170,7 @@ created_at        timestamptz
 updated_at        timestamptz
 ```
 
-### Status
-
-Initial controlled values:
+Initial status values:
 
 ```text
 PLANNED
@@ -218,19 +179,9 @@ COMPLETED
 ARCHIVED
 ```
 
-### Rules
-
-- Projects belong to a user.
-- Project deletion behavior must be explicitly defined before migration.
-- Associated records must not become accessible through another user.
-
----
-
-# 9. `goals`
+## 9. `goals`
 
 Represents a desired outcome or longer-term target.
-
-### Planned fields
 
 ```text
 id                uuid PK
@@ -246,7 +197,7 @@ created_at        timestamptz
 updated_at        timestamptz
 ```
 
-### Status
+Initial status values:
 
 ```text
 ACTIVE
@@ -254,23 +205,11 @@ COMPLETED
 ARCHIVED
 ```
 
-### Progress
+Progress should normally be constrained to 0–100. The exact SQL constraint is finalized during migration implementation.
 
-The application should enforce a sensible range, normally:
-
-```text
-0–100
-```
-
-The exact SQL constraint will be finalized during migration implementation.
-
----
-
-# 10. `notes`
+## 10. `notes`
 
 Stores user-created knowledge and information.
-
-### Planned fields
 
 ```text
 id                uuid PK
@@ -285,17 +224,11 @@ updated_at        timestamptz
 archived_at       timestamptz nullable
 ```
 
-### Rules
+Notes may connect to other entities where appropriate, but relationships must never create cross-user access.
 
-Notes may be connected to other entities where appropriate, but the relationships must never create cross-user access.
-
----
-
-# 11. `resources`
+## 11. `resources`
 
 Stores useful external resources and bookmarks.
-
-### Planned fields
 
 ```text
 id                uuid PK
@@ -310,9 +243,7 @@ updated_at        timestamptz
 archived_at       timestamptz nullable
 ```
 
-### Resource Types
-
-Examples:
+Example resource types:
 
 ```text
 ARTICLE
@@ -323,15 +254,9 @@ WEBSITE
 OTHER
 ```
 
-The database may keep this as a controlled value or flexible text depending on the final implementation.
-
----
-
-# 12. `study_sessions`
+## 12. `study_sessions`
 
 Stores completed or active study activity.
-
-### Planned fields
 
 ```text
 id                uuid PK
@@ -348,26 +273,18 @@ created_at        timestamptz
 updated_at        timestamptz
 ```
 
-### Rules
+Duration must not be negative, and active sessions must be distinguishable from completed sessions.
 
-- Duration must not be negative.
-- Active sessions must be distinguishable from completed sessions.
-- Duration should be calculated consistently.
-
----
-
-# 13. `focus_sessions`
+## 13. `focus_sessions`
 
 Stores focused work sessions.
-
-### Planned fields
 
 ```text
 id                uuid PK
 user_id           uuid → profiles.user_id
 task_id           uuid nullable → tasks.id
 project_id        uuid nullable → projects.id
-goal_id           uuid nullable → goals.id
+goal_id            uuid nullable → goals.id
 started_at        timestamptz
 ended_at          timestamptz nullable
 duration_seconds  integer nullable
@@ -376,7 +293,7 @@ created_at        timestamptz
 updated_at        timestamptz
 ```
 
-### Status
+Initial status values:
 
 ```text
 ACTIVE
@@ -385,15 +302,11 @@ COMPLETED
 CANCELLED
 ```
 
-The exact pause representation will be finalized before migration implementation.
+The exact pause representation is finalized before migration implementation.
 
----
-
-# 14. `notifications`
+## 14. `notifications`
 
 Stores user-facing notification records.
-
-### Planned fields
 
 ```text
 id                uuid PK
@@ -405,19 +318,9 @@ read_at           timestamptz nullable
 created_at        timestamptz
 ```
 
-### Rules
-
-- Notifications belong to one user.
-- A notification should not expose another user's data.
-- Read/unread state must be represented consistently.
-
----
-
-# 15. `activity_events`
+## 15. `activity_events`
 
 Stores meaningful activity for user-facing activity timelines.
-
-### Planned fields
 
 ```text
 id                uuid PK
@@ -429,17 +332,11 @@ metadata          jsonb nullable
 created_at        timestamptz
 ```
 
-### Rules
+Activity should contain only the metadata required for the timeline. Sensitive content should not be unnecessarily duplicated.
 
-Activity records should contain minimal metadata needed to display an event. Sensitive content should not be unnecessarily duplicated into the activity table.
-
----
-
-# 16. `file_attachments`
+## 16. `file_attachments`
 
 Stores metadata for files stored in Supabase Storage.
-
-### Planned fields
 
 ```text
 id                uuid PK
@@ -457,11 +354,7 @@ created_at        timestamptz
 
 The actual binary file is stored in Supabase Storage, not PostgreSQL.
 
----
-
-# 17. Relationship Rules
-
-The initial relationship graph is:
+## 17. Relationship Model
 
 ```text
 Profile
@@ -488,37 +381,31 @@ Profile
 └── Preferences
 ```
 
-All paths must preserve the user's ownership boundary.
+All relationship paths must preserve the user's ownership boundary.
 
----
-
-# 18. Ownership Strategy
+## 18. Ownership Strategy
 
 Every user-private table should contain an ownership path that can be checked efficiently.
 
-Preferred pattern for MVP:
+Preferred MVP pattern:
 
 ```text
 user_id → authenticated user's ID
 ```
 
-This makes RLS policies simpler and reduces complicated recursive ownership checks.
+This makes RLS policies simpler. When a record references another user's entity, the database must prevent the relationship from being created.
 
-When a record references another user's entity, the database must prevent the relationship from being created.
-
----
-
-# 19. Row Level Security Strategy
+## 19. Row Level Security Strategy
 
 RLS is mandatory for private tables.
 
-Conceptually, the normal policy is:
+Conceptually, the normal ownership policy is:
 
 ```sql
 user_id = auth.uid()
 ```
 
-Policies must cover relevant operations:
+Policies must cover the relevant operations:
 
 ```text
 SELECT
@@ -527,74 +414,49 @@ UPDATE
 DELETE
 ```
 
-Each table must receive policies appropriate to its relationships.
+The exact policies must also validate ownership of referenced entities where necessary.
 
-### Important
+RLS must be tested using at least two authenticated users before production release.
 
-RLS must be tested using different authenticated users before production release.
+## 20. Foreign Key Strategy
 
----
-
-# 20. Foreign Key Strategy
-
-Foreign keys should be used for relationships that require referential integrity.
+Foreign keys enforce referential integrity.
 
 Examples:
 
 ```text
+profiles.user_id → auth.users.id
+tasks.user_id → profiles.user_id
 projects.user_id → profiles.user_id
- tasks.user_id → profiles.user_id
- tasks.project_id → projects.id
- notes.project_id → projects.id
- focus_sessions.task_id → tasks.id
+goals.user_id → profiles.user_id
+tasks.project_id → projects.id
+notes.project_id → projects.id
+focus_sessions.task_id → tasks.id
 ```
 
-The final SQL must use a consistent and valid reference strategy. Where `profiles.id` and `auth.users.id` differ, the chosen relationship must be explicit rather than mixing identifiers.
+The implementation must use one consistent profile/user identifier strategy and must not mix `profiles.id` and `auth.users.id` accidentally.
 
----
-
-# 21. Delete Strategy
+## 21. Delete Strategy
 
 Deletion behavior must be intentional.
 
-### Default principle
-
 Prefer archive/soft-delete behavior for user-facing entities where historical context matters.
 
-Potential archival fields:
+Potential archival field:
 
 ```text
 archived_at
 ```
 
-### Hard deletion
-
-Hard deletion may be used when:
-
-- The user explicitly requests permanent deletion.
-- The entity contains no required historical record.
-- Referential consequences are understood.
+Hard deletion may be used when the user explicitly requests permanent deletion and all referential consequences are understood.
 
 Cascading deletes must never accidentally remove unrelated user data.
 
----
+## 22. Index Strategy
 
-# 22. Index Strategy
+Indexes should support real query patterns rather than every column.
 
-Indexes should support actual query patterns.
-
-Expected indexes include combinations around:
-
-```text
-user_id
-user_id + created_at
-user_id + due_at
-user_id + status
-project_id
- goal_id
-```
-
-Examples of useful access patterns:
+Expected access patterns include:
 
 ```text
 User's active tasks
@@ -606,15 +468,24 @@ Unread notifications
 User's focus history
 ```
 
-Indexes should be added based on actual query requirements rather than indexing every column.
+Likely useful indexes include combinations involving:
 
----
+```text
+user_id
+user_id + created_at
+user_id + due_at
+user_id + status
+project_id
+goal_id
+```
 
-# 23. Search Strategy
+Final indexes are added after query patterns are implemented and reviewed.
 
-MVP search should use PostgreSQL capabilities.
+## 23. Search Strategy
 
-Potential indexed/searchable fields include:
+MVP search uses PostgreSQL capabilities.
+
+Potential searchable fields:
 
 ```text
 tasks.title
@@ -629,40 +500,26 @@ resources.title
 resources.description
 ```
 
-Full-text search can be introduced where appropriate.
+PostgreSQL full-text search can be introduced where appropriate.
 
-Vector embeddings are explicitly excluded from the MVP.
+Vector embeddings are explicitly excluded from MVP.
 
----
+## 24. Timestamps
 
-# 24. Timestamps
-
-Relevant tables should use:
+Relevant tables use:
 
 ```text
 created_at timestamptz
 updated_at timestamptz
 ```
 
-Lifecycle timestamps such as:
+Lifecycle timestamps such as `completed_at`, `archived_at`, and `read_at` are used only where their meaning is clear.
 
-```text
-completed_at
-archived_at
-read_at
-```
+Store timestamps in UTC-compatible form and convert to the user's timezone for display.
 
-should only exist where their meaning is clear.
+## 25. Constraints
 
-The application should use UTC-compatible timestamp storage and convert to the user's timezone for display.
-
----
-
-# 25. Constraints
-
-The database should enforce important invariants where practical.
-
-Examples:
+The database should enforce important invariants where practical:
 
 ```text
 Required titles cannot be empty.
@@ -675,11 +532,9 @@ Controlled status values remain valid.
 
 Database constraints complement application validation.
 
----
+## 26. Database Functions & Triggers
 
-# 26. Database Functions & Triggers
-
-Database functions and triggers should be introduced only when they provide a clear benefit.
+Functions and triggers should be introduced only when they provide a clear benefit.
 
 Potential uses:
 
@@ -689,9 +544,7 @@ Potential uses:
 
 Business logic should not be hidden inside complex triggers when equivalent application logic would be easier to understand and test.
 
----
-
-# 27. Storage Architecture
+## 27. Storage Architecture
 
 Supabase Storage should use controlled buckets and paths.
 
@@ -707,11 +560,9 @@ Bucket
 
 Storage policies must verify ownership before allowing access.
 
-The exact bucket strategy will be finalized during implementation.
+The exact bucket strategy is finalized during implementation.
 
----
-
-# 28. Migration Strategy
+## 28. Migration Strategy
 
 Every schema change must be represented as a migration.
 
@@ -725,13 +576,9 @@ supabase/
     └── 003_indexes.sql
 ```
 
-Migration names should describe their purpose.
+Migration names should describe their purpose. Never rely on undocumented manual database edits for project state.
 
-Never rely on undocumented manual database edits for project state.
-
----
-
-# 29. Seed Data
+## 29. Seed Data
 
 Development seed data may be created for testing UI states.
 
@@ -742,11 +589,9 @@ Seed data must:
 - Never include production credentials.
 - Be reproducible.
 
-Production should not depend on demo records.
+Production must not depend on demo records.
 
----
-
-# 30. Database Security Checklist
+## 30. Database Security Checklist
 
 Before MVP release:
 
@@ -761,11 +606,9 @@ Before MVP release:
 - [ ] Database migrations committed.
 - [ ] No production secrets in Git.
 
----
+## 31. Future Collaboration Path
 
-# 31. Future Collaboration Path
-
-The MVP should not implement full collaboration yet.
+The MVP does not implement full collaboration.
 
 If collaboration is introduced later, the likely evolution is:
 
@@ -778,51 +621,34 @@ Workspace
  └── Projects
 ```
 
-The current schema should therefore avoid naming assumptions that make workspace ownership impossible later, while still keeping the MVP simple.
+The current schema should remain simple while avoiding assumptions that make workspace ownership impossible later.
 
----
-
-# 32. AI Database Strategy — Deferred
+## 32. AI Database Strategy — Deferred
 
 No AI-specific tables are required for MVP.
 
-Do not create tables for:
+Do not create tables for embeddings, vector documents, model conversations, AI agents, AI memories, or AI usage tracking until the corresponding feature is approved.
 
-- embeddings
-- vector documents
-- model conversations
-- AI agents
-- AI memories
-- AI usage tracking
-
-until the corresponding feature is actually approved for implementation.
-
----
-
-# 33. Final Schema Checklist
+## 33. Final Schema Checklist
 
 Before implementing the database, confirm:
 
-- [ ] Entity list is approved.
-- [ ] Field names are finalized.
-- [ ] Relationships are finalized.
-- [ ] Ownership strategy is finalized.
-- [ ] RLS policies are designed.
-- [ ] Delete behavior is defined.
-- [ ] Indexes are justified.
-- [ ] Storage strategy is defined.
-- [ ] Migration sequence is defined.
-- [ ] Test scenarios are defined.
+- [ ] Entity list approved.
+- [ ] Field names finalized.
+- [ ] Relationships finalized.
+- [ ] Ownership strategy finalized.
+- [ ] RLS policies designed.
+- [ ] Delete behavior defined.
+- [ ] Indexes justified.
+- [ ] Storage strategy defined.
+- [ ] Migration sequence defined.
+- [ ] Test scenarios defined.
 
----
-
-## 34. Important Implementation Note
+## 34. Implementation Note
 
 This document is an architecture specification, not executable SQL.
 
-The actual migration files must be generated only after the field types, foreign-key strategy, constraints, RLS policies, and Supabase-specific implementation details are reviewed together.
-
-This prevents the database from becoming an accidental source of architectural drift.
+Actual migration files must be generated only after field types, foreign keys, constraints, RLS policies, and Supabase-specific implementation details are reviewed together. This prevents the database from becoming an accidental source of architectural drift.
 
 ---
 
