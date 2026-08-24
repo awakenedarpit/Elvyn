@@ -13,14 +13,16 @@ export type Goal = {
 
 export async function getCurrentUserGoals(): Promise<Goal[]> {
   const supabase = await createClient()
+  const { data: userData, error: userError } = await supabase.auth.getUser()
+
+  if (userError || !userData.user) return []
+
   const { data, error } = await supabase
     .from('goals')
     .select('id, user_id, title, description, status, target_date, created_at, updated_at')
+    .eq('user_id', userData.user.id)
     .order('created_at', { ascending: false })
 
-  if (error) {
-    throw new Error(`Unable to load goals: ${error.message}`)
-  }
-
+  if (error) throw new Error(`Unable to load goals: ${error.message}`)
   return (data ?? []) as Goal[]
 }
