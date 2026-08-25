@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, withFutureJwtRetry } from '@/lib/supabase/server'
 
 export type Profile = {
   id: string
@@ -16,11 +16,13 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     return null
   }
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, display_name, avatar_url, created_at, updated_at')
-    .eq('id', userData.user.id)
-    .maybeSingle()
+  const { data, error } = await withFutureJwtRetry(() =>
+    supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url, created_at, updated_at')
+      .eq('id', userData.user.id)
+      .maybeSingle(),
+  )
 
   if (error) {
     throw new Error(`Unable to load profile: ${error.message}`)
