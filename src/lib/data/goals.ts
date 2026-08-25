@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, withFutureJwtRetry } from '@/lib/supabase/server'
 
 export type Goal = {
   id: string
@@ -17,11 +17,13 @@ export async function getCurrentUserGoals(): Promise<Goal[]> {
 
   if (userError || !userData.user) return []
 
-  const { data, error } = await supabase
-    .from('goals')
-    .select('id, user_id, title, description, status, target_date, created_at, updated_at')
-    .eq('user_id', userData.user.id)
-    .order('created_at', { ascending: false })
+  const { data, error } = await withFutureJwtRetry(() =>
+    supabase
+      .from('goals')
+      .select('id, user_id, title, description, status, target_date, created_at, updated_at')
+      .eq('user_id', userData.user.id)
+      .order('created_at', { ascending: false }),
+  )
 
   if (error) throw new Error(`Unable to load goals: ${error.message}`)
   return (data ?? []) as Goal[]
