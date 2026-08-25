@@ -3,6 +3,11 @@ import { cookies } from 'next/headers'
 
 const FUTURE_JWT_MESSAGE = 'jwt issued at future'
 
+type SupabaseResult<T, E extends { message: string } | null> = {
+  data: T
+  error: E
+}
+
 export async function createClient() {
   const cookieStore = await cookies()
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -37,9 +42,10 @@ export async function createClient() {
  * from the future. Retry that specific transient condition once after a short
  * delay; all other database errors are returned unchanged.
  */
-export async function withFutureJwtRetry<T, E extends { message: string } | null>(
-  operation: () => Promise<{ data: T; error: E }>,
-) {
+export async function withFutureJwtRetry<
+  T,
+  E extends { message: string } | null,
+>(operation: () => PromiseLike<SupabaseResult<T, E>>) {
   let result = await operation()
 
   if (result.error?.message.toLowerCase().includes(FUTURE_JWT_MESSAGE)) {
