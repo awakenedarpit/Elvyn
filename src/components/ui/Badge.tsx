@@ -6,11 +6,11 @@ type BadgeProps = {
 }
 
 const tones = {
-  neutral: 'border-black/10 bg-black/[0.03] text-black/60 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60',
-  success: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
-  warning: 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  neutral: 'border-black/[.07] bg-black/[.025] text-black/55 dark:border-white/[.08] dark:bg-white/[.045] dark:text-white/60',
+  success: 'border-emerald-500/15 bg-emerald-500/[.08] text-emerald-700 dark:text-emerald-300',
+  warning: 'border-amber-500/15 bg-amber-500/[.08] text-amber-700 dark:text-amber-300',
 }
 
 export function Badge({ children, tone = 'neutral' }: BadgeProps) {
-  return <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${tones[tone]}`}>{children}</span>
+  return <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium tracking-[-0.01em] ${tones[tone]}`}><span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" aria-hidden="true" />{children}</span>
 }
